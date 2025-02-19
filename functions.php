@@ -177,7 +177,7 @@ function saveFile(string $sourceFilePath, string $destinationDir, string $fileNa
     }
 }
 
-function fetchSectionDataAPI(mysqli $conn): array|string
+function fetchSectionDataAPI(mysqli $conn, string $apiEndpointUrl): array|string
 {
     $sql = "SELECT
                 s.id AS section_id,
@@ -193,7 +193,7 @@ function fetchSectionDataAPI(mysqli $conn): array|string
                 ) AS animal_list_json
             FROM sections s
             LEFT JOIN enclosure e ON s.id = e.section_id
-            LEFT JOIN animals a ON e.id = a.enclosure_id  -- Corrected JOIN condition
+            LEFT JOIN animals a ON e.id = a.enclosure_id
             GROUP BY s.id, s.section_name
             ORDER BY s.section_name";
 
@@ -232,6 +232,7 @@ function fetchSectionDataAPI(mysqli $conn): array|string
     }
 
     return [
+        'api_endpoint' => $apiEndpointUrl, // Added API endpoint URL to response
         'total_count' => count($sectionsData),
         'result' => $sectionsData,
     ];

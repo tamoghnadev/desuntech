@@ -17,6 +17,24 @@ if ($conn->connect_error) {
 $operationResult = null; // Variable to store results
 $selectedOperation = $_POST['operation'] ?? ''; // Get selected operation
 
+// --- API Endpoint Logic ---
+$apiEndpointUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] . "?api_call=sections_data"; // Construct API endpoint URL
+
+if (isset($_GET['api_call']) && $_GET['api_call'] === 'sections_data') {
+    $apiData = fetchSectionDataAPI($conn, $apiEndpointUrl); // Pass API endpoint URL to function
+    if (is_array($apiData)) {
+        header('Content-Type: application/json'); // Set header for JSON response
+        echo json_encode($apiData, JSON_PRETTY_PRINT); // Output JSON
+    } else {
+        header('Content-Type: text/plain', true, 500); // Set error header
+        echo "API Error: " . $apiData; // Output error message
+    }
+    $conn->close(); // Close connection and exit
+    exit();
+}
+// --- End API Endpoint Logic ---
+
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($selectedOperation === 'csv_import') {
         // --- CSV Import Section ---
@@ -27,7 +45,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } elseif ($selectedOperation === 'media_validate') {
         // --- Media Upload & Validation Section ---
         $uploadDir = 'uploads'; // Directory for uploads
-        $maxFileSizeKB = 200;   // Max file size in KB
+        $maxFileSizeKB = 100;   // Max file size in KB
 
         if (isset($_FILES["mediaFile"])) {
             $operationResult = validateAndCompressMedia($_FILES["mediaFile"], $maxFileSizeKB, $uploadDir); // Call media validation
@@ -45,7 +63,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     } elseif ($selectedOperation === 'fetch_api_data') {
         // --- Fetch API Data Section ---
-        $apiData = fetchSectionDataAPI($conn);
+        // Corrected line below: Passing $apiEndpointUrl as the second argument
+        $apiData = fetchSectionDataAPI($conn, $apiEndpointUrl);
         if (is_array($apiData)) {
             $operationResult = $apiData; // Store API data array for display
         } else {
